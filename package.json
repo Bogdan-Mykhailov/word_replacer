@@ -1,0 +1,20 @@
+{
+  "name": "word_replacer",
+  "version": "1.0.0",
+  "description": "The Word Replacer is a specialized tool meticulously crafted to identify and replace words in a given text.",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "copy-webpack-plugin": "^11.0.0",
+    "html-webpack-plugin": "^5.6.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

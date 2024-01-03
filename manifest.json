@@ -1,0 +1,20 @@
+{
+  "name": "word_replacer",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "description": "The Word Replacer is a specialized tool meticulously crafted to identify and replace words in a given text.",
+  "author": "Bogdan Mykhailov",
+  "icons": {
+    "32": "icon-32.png",
+    "64": "icon-64.png",
+    "128": "icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "js": ["content.js"]
+    }
+  ]
+}
