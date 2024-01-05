@@ -1,0 +1,12 @@
+.root {
+    padding: 10px 20px;
+    border-radius: 4px;
+    background: #FF868E;
+    font-family: 'Jost', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s ease-in-out;
+    color: #F8F8F7;
+    gap: 10px;
+    z-index: 1000;
+}

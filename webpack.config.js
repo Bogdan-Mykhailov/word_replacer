@@ -4,7 +4,8 @@ const HTMLPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: {
-    content: './src/content.ts'
+    background: './src/background.ts',
+    content: './src/content.ts',
   },
   devtool: 'inline-source-map',
   mode: 'production',
@@ -35,17 +36,13 @@ module.exports = {
           to: path.resolve('dist')
         },
         {
-          from: path.resolve('./src/icons/icon-32.png'),
+          from: path.resolve('./src/style.css'),
           to: path.resolve('dist')
         },
         {
-          from: path.resolve('./src/icons/icon-64.png'),
-          to: path.resolve('dist')
+          from: path.resolve('./src/icons'),
+          to: path.resolve('dist/icons')
         },
-        {
-          from: path.resolve('./src/icons/icon-128.png'),
-          to: path.resolve('dist')
-        }
       ]
     })
   ]
