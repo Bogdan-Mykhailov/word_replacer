@@ -4,7 +4,6 @@ const HTMLPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: {
-    background: './src/background.ts',
     content: './src/content.ts',
   },
   devtool: 'inline-source-map',

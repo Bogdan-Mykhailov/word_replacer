@@ -1,5 +1,5 @@
 .root {
-    padding: 10px 20px;
+    padding: 10px 10px 5px 10px;
     border-radius: 4px;
     background: #FF868E;
     font-family: 'Jost', Helvetica, Arial, sans-serif;
@@ -10,3 +10,4 @@
     gap: 10px;
     z-index: 1000;
 }
+

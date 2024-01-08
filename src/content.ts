@@ -7,8 +7,19 @@ const dictionary: Dictionary = {
   Helo: ['hello', 'Help', 'Hell'],
   heldp: ['help', 'held', 'hello'],
 };
+let selectedOptionIndex = -1;
 
-// Вибираємо початкові елементи
+function closePopup() {
+  const popupElement = document.getElementById('wordReplacerPopup');
+  if (popupElement !== null) {
+    popupElement.remove();
+    selectedOptionIndex = -1;
+  }
+
+  document.removeEventListener('keydown', handleKeyDown);
+  document.removeEventListener('click', handleOutsideClick);
+}
+
 const selectedElements = [
   ...document.querySelectorAll<HTMLInputElement>('input[type="text"]'),
   ...document.querySelectorAll('div[contenteditable="true"]'),
@@ -19,7 +30,6 @@ function createPopup(): HTMLElement {
   popup.id = 'wordReplacerPopup';
   popup.classList.add('root');
 
-  // Додаємо попап до shadow DOM
   const shadowRoot = popup.attachShadow({ mode: 'open' });
 
   return popup;
@@ -28,15 +38,15 @@ function createPopup(): HTMLElement {
 function positionPopup(popup: HTMLElement, targetElement: HTMLElement) {
   const rect = targetElement.getBoundingClientRect();
   const popupTop = rect.top;
-  const popupLeft = rect.right + 5; // позиціоную попап на 5px праворуч від елемента
+  const popupLeft = rect.right + 5;
 
   popup.style.position = 'fixed';
   popup.style.top = popupTop + 'px';
   popup.style.left = popupLeft + 'px';
 }
 
-// Явне визначення типів для функції handleInputEvent
-let previousInputValue = ''; // Зберігаємо попереднє значення поля вводу
+
+let previousInputValue = '';
 
 function handleInputEvent(event: Event) {
   const target = event.target as HTMLInputElement;
@@ -46,18 +56,13 @@ function handleInputEvent(event: Event) {
     const inputValue = inputElement.value.trim();
     const words = inputValue.split(' ');
 
-    // Очищаємо попап, якщо значення поля для вводу змінилося та не містить ключового слова
+
     if (inputValue !== previousInputValue) {
-      const popupElement = document.getElementById('wordReplacerPopup');
-      if (popupElement !== null) {
-        popupElement.remove();
-      }
+      closePopup();
     }
 
-    // Зберігаємо поточне значення для майбутніх порівнянь
     previousInputValue = inputValue;
 
-    // Ваша подальша логіка обробки введення
     words.forEach((word) => {
       if (dictionary.hasOwnProperty(word) && !document.getElementById('wordReplacerPopup')) {
         const popup = createPopup();
@@ -68,28 +73,65 @@ function handleInputEvent(event: Event) {
           option.textContent = replacement;
           option.style.cursor = 'pointer';
           option.style.marginBottom = '5px';
+          option.style.padding = '0 15px';
+          option.style.borderRadius = '4px';
+          option.style.textAlign = 'center';
 
-          // Перевіряємо, чи shadowRoot не є null
           if (popup.shadowRoot !== null) {
-            popup.shadowRoot.appendChild(option); // Додаємо опцію до тіньового DOM
+            popup.shadowRoot.appendChild(option);
           }
 
           option.addEventListener('click', () => {
-            // Замінюємо слово та прибираємо попап
             inputElement.value = inputElement.value.replace(word, replacement);
-            const popupElement = document.getElementById('wordReplacerPopup');
-            if (popupElement !== null) {
-              popupElement.remove();
-            }
+            closePopup();
           });
         });
 
         positionPopup(popup, inputElement);
 
-        // Додаємо попап до документу
         document.body.appendChild(popup);
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('click', handleOutsideClick);
       }
     });
+  }
+}
+
+function updatePopupOptions(popup: HTMLElement, options: Element[], selectedIndex: number) {
+  options.forEach((option, index) => {
+    const element = option as HTMLElement;
+    element.style.backgroundColor = index === selectedIndex ? 'rgb(255,210,128, 0.7)' : 'transparent';
+  });
+}
+
+function handleKeyDown(event: KeyboardEvent) {
+  const popupElement = document.getElementById('wordReplacerPopup');
+  if (popupElement !== null) {
+    const options = Array.from(popupElement.shadowRoot?.children || []);
+    const selectedIndex = options.findIndex((option) => {
+      const element = option as HTMLElement;
+      return element.style.backgroundColor === 'rgb(255,210,128, 0.7)';
+    });
+
+    if (event.key === 'ArrowDown') {
+      selectedOptionIndex = Math.min(selectedOptionIndex + 1, options.length - 1);
+      updatePopupOptions(popupElement, options, selectedOptionIndex);
+    } else if (event.key === 'ArrowUp') {
+      selectedOptionIndex = Math.max(selectedOptionIndex - 1, 0);
+      updatePopupOptions(popupElement, options, selectedOptionIndex);
+    } else if (event.key === 'Enter') {
+      const selectedOption = options[selectedIndex] as HTMLElement;
+      if (selectedOption) {
+        selectedOption.click();
+      }
+    }
+  }
+}
+
+function handleOutsideClick(event: MouseEvent) {
+  const popupElement = document.getElementById('wordReplacerPopup');
+  if (popupElement !== null && !popupElement.contains(event.target as Node)) {
+    closePopup();
   }
 }
 
@@ -99,20 +141,16 @@ function startListening() {
   });
 }
 
-// Слідкуємо за змінами в DOM і викликаємо код для нових елементів
 const observer = new MutationObserver(() => {
   startListening();
 });
 
-// Встановлюємо спостереження за body та його дочірніми елементами
 observer.observe(document.body, { childList: true, subtree: true });
 
-// Зупиняємо слідкування при видаленні розширення
 chrome.runtime.onMessage.addListener((request) => {
   if (request.message === 'stopObserving') {
     observer.disconnect();
   }
 });
 
-// Починаємо слухати події для початкових елементів
 startListening();
