@@ -1,12 +1,5 @@
-interface Dictionary {
-  [key: string]: string[];
-}
+import {dictionary} from "./dictionary";
 
-const dictionary: Dictionary = {
-  Cat: ['Dog', 'Rat', 'bat'],
-  Helo: ['hello', 'Help', 'Hell'],
-  heldp: ['help', 'held', 'hello'],
-};
 let selectedOptionIndex = -1;
 
 function closePopup() {
@@ -45,7 +38,6 @@ function positionPopup(popup: HTMLElement, targetElement: HTMLElement) {
   popup.style.left = popupLeft + 'px';
 }
 
-
 let previousInputValue = '';
 
 function handleInputEvent(event: Event) {
@@ -55,7 +47,6 @@ function handleInputEvent(event: Event) {
     const inputElement = target;
     const inputValue = inputElement.value.trim();
     const words = inputValue.split(' ');
-
 
     if (inputValue !== previousInputValue) {
       closePopup();
@@ -74,8 +65,8 @@ function handleInputEvent(event: Event) {
           option.style.cursor = 'pointer';
           option.style.marginBottom = '5px';
           option.style.padding = '0 15px';
-          option.style.borderRadius = '4px';
           option.style.textAlign = 'center';
+          option.style.borderRadius = '4px';
 
           if (popup.shadowRoot !== null) {
             popup.shadowRoot.appendChild(option);
@@ -100,7 +91,7 @@ function handleInputEvent(event: Event) {
 function updatePopupOptions(popup: HTMLElement, options: Element[], selectedIndex: number) {
   options.forEach((option, index) => {
     const element = option as HTMLElement;
-    element.style.backgroundColor = index === selectedIndex ? 'rgb(255,210,128, 0.7)' : 'transparent';
+    element.style.backgroundColor = index === selectedIndex ? 'rgba(255, 210, 128, 0.7)' : 'transparent';
   });
 }
 
@@ -110,7 +101,7 @@ function handleKeyDown(event: KeyboardEvent) {
     const options = Array.from(popupElement.shadowRoot?.children || []);
     const selectedIndex = options.findIndex((option) => {
       const element = option as HTMLElement;
-      return element.style.backgroundColor === 'rgb(255,210,128, 0.7)';
+      return element.style.backgroundColor === 'rgba(255, 210, 128, 0.7)';
     });
 
     if (event.key === 'ArrowDown') {
