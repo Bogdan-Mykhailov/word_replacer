@@ -1,21 +1,8 @@
 import {dictionary} from "./dictionary";
 
-let selectedOptionIndex = -1;
-
-function closePopup() {
-  const popupElement = document.getElementById('wordReplacerPopup');
-  if (popupElement !== null) {
-    popupElement.remove();
-    selectedOptionIndex = -1;
-  }
-
-  document.removeEventListener('keydown', handleKeyDown);
-  document.removeEventListener('click', handleOutsideClick);
-}
-
 const selectedElements = [
   ...document.querySelectorAll<HTMLInputElement>('input[type="text"]'),
-  ...document.querySelectorAll('div[contenteditable="true"]'),
+  ...document.querySelectorAll<HTMLElement>('[contenteditable="true"]'),
 ];
 
 function createPopup(): HTMLElement {
@@ -23,9 +10,18 @@ function createPopup(): HTMLElement {
   popup.id = 'wordReplacerPopup';
   popup.classList.add('root');
 
-  const shadowRoot = popup.attachShadow({ mode: 'open' });
-
+  const shadowRoot = popup.attachShadow({mode: 'open'});
   return popup;
+}
+
+function closePopup() {
+  const popupElement = document.getElementById('wordReplacerPopup');
+  if (popupElement) {
+    popupElement.remove();
+    selectedOptionIndex = -1;
+  }
+  document.removeEventListener('keydown', handleKeyDown);
+  document.removeEventListener('click', handleOutsideClick);
 }
 
 function positionPopup(popup: HTMLElement, targetElement: HTMLElement) {
@@ -38,56 +34,6 @@ function positionPopup(popup: HTMLElement, targetElement: HTMLElement) {
   popup.style.left = popupLeft + 'px';
 }
 
-let previousInputValue = '';
-
-function handleInputEvent(event: Event) {
-  const target = event.target as HTMLInputElement;
-
-  if (target) {
-    const inputElement = target;
-    const inputValue = inputElement.value.trim();
-    const words = inputValue.split(' ');
-
-    if (inputValue !== previousInputValue) {
-      closePopup();
-    }
-
-    previousInputValue = inputValue;
-
-    words.forEach((word) => {
-      if (dictionary.hasOwnProperty(word) && !document.getElementById('wordReplacerPopup')) {
-        const popup = createPopup();
-
-        const replacements = dictionary[word] || [];
-        replacements.forEach((replacement) => {
-          const option = document.createElement('div');
-          option.textContent = replacement;
-          option.style.cursor = 'pointer';
-          option.style.marginBottom = '5px';
-          option.style.padding = '0 15px';
-          option.style.textAlign = 'center';
-          option.style.borderRadius = '4px';
-
-          if (popup.shadowRoot !== null) {
-            popup.shadowRoot.appendChild(option);
-          }
-
-          option.addEventListener('click', () => {
-            inputElement.value = inputElement.value.replace(word, replacement);
-            closePopup();
-          });
-        });
-
-        positionPopup(popup, inputElement);
-
-        document.body.appendChild(popup);
-        document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('click', handleOutsideClick);
-      }
-    });
-  }
-}
-
 function updatePopupOptions(popup: HTMLElement, options: Element[], selectedIndex: number) {
   options.forEach((option, index) => {
     const element = option as HTMLElement;
@@ -95,9 +41,11 @@ function updatePopupOptions(popup: HTMLElement, options: Element[], selectedInde
   });
 }
 
+let selectedOptionIndex = -1;
+
 function handleKeyDown(event: KeyboardEvent) {
   const popupElement = document.getElementById('wordReplacerPopup');
-  if (popupElement !== null) {
+  if (popupElement) {
     const options = Array.from(popupElement.shadowRoot?.children || []);
     const selectedIndex = options.findIndex((option) => {
       const element = option as HTMLElement;
@@ -121,27 +69,93 @@ function handleKeyDown(event: KeyboardEvent) {
 
 function handleOutsideClick(event: MouseEvent) {
   const popupElement = document.getElementById('wordReplacerPopup');
-  if (popupElement !== null && !popupElement.contains(event.target as Node)) {
+  if (popupElement && !popupElement.contains(event.target as Node)) {
     closePopup();
   }
 }
 
-function startListening() {
-  selectedElements.forEach((element) => {
-    element.addEventListener('input', handleInputEvent);
-  });
-}
+selectedElements.forEach(element => element.addEventListener('input', () => {
+  if (element instanceof HTMLInputElement) {
+    const inputValue = element.value;
+    const words = inputValue.split(' ');
 
-const observer = new MutationObserver(() => {
-  startListening();
-});
+      element.onkeyup = (e: KeyboardEvent) => {
+        if (e.code === 'Space') {
+          words.forEach(word => {
+            if (dictionary.hasOwnProperty(word) && !document.getElementById('wordReplacerPopup')) {
+              const popup = createPopup();
+              const replacements = dictionary[word] || [];
+              replacements.forEach((replacement) => {
+                const option = document.createElement('div');
+                option.textContent = replacement;
+                option.style.cursor = 'pointer';
+                option.style.marginBottom = '5px';
+                option.style.padding = '0 15px';
+                option.style.textAlign = 'center';
+                option.style.borderRadius = '4px';
 
-observer.observe(document.body, { childList: true, subtree: true });
+                if (popup.shadowRoot !== null) {
+                  popup.shadowRoot.appendChild(option);
+                }
 
-chrome.runtime.onMessage.addListener((request) => {
-  if (request.message === 'stopObserving') {
-    observer.disconnect();
+                option.addEventListener('click', () => {
+                  element.value = element.value.replace(word, replacement);
+                  closePopup();
+                });
+              })
+
+              positionPopup(popup, element);
+
+              document.body.appendChild(popup);
+              document.addEventListener('keydown', handleKeyDown);
+              document.addEventListener('click', handleOutsideClick);
+            }
+          })
+      }
+    }
+  } else if (element instanceof HTMLElement) {
+    const inputValue = element.textContent;
+    const words = inputValue && inputValue.split(' ');
+
+    if (words && dictionary.hasOwnProperty(words[words.length - 1])) {
+      element.onkeyup = (e: KeyboardEvent) => {
+        if (e.code === 'Space') {
+          words.forEach(word => {
+            if (dictionary.hasOwnProperty(word) && !document.getElementById('wordReplacerPopup')) {
+              const popup = createPopup()
+              const replacements = dictionary[word] || [];
+              replacements.forEach((replacement) => {
+                const option = document.createElement('div');
+                option.textContent = replacement;
+                option.style.cursor = 'pointer';
+                option.style.marginBottom = '5px';
+                option.style.padding = '0 15px';
+                option.style.textAlign = 'center';
+                option.style.borderRadius = '4px';
+
+                if (popup.shadowRoot !== null) {
+                  popup.shadowRoot.appendChild(option);
+                }
+
+                option.addEventListener('click', () => {
+                  // @ts-ignore
+                  element.textContent = element.textContent.replace(word, replacement);
+                  closePopup();
+                });
+              })
+
+              positionPopup(popup, element);
+
+              document.body.appendChild(popup);
+              document.addEventListener('keydown', handleKeyDown);
+              document.addEventListener('click', handleOutsideClick);
+            }
+          })
+        }
+      }
+
+      return element.textContent;
+    }
   }
-});
+}))
 
-startListening();
